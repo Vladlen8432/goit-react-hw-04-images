@@ -1,0 +1,34 @@
+.searchbar {
+    display: flex;
+    justify-content: center;
+    background-color: #66ccff;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 4px;
+}
+
+.form {
+    width: 25%;
+    height: 40px;
+    background-color: white;
+    border-radius: 4px;
+}
+
+.button {
+    padding: 0;
+    height: 100%;
+    width: 7%;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.input {
+    padding: 0;
+    width: 93%;
+    height: 100%;
+    background-color: transparent;
+    border: transparent;
+    outline: none;
+    font-size: 100%;
+}
