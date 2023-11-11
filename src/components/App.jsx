@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 import Searchbar from './Searchbar/Searchbar';
@@ -7,100 +7,80 @@ import ImageGallery from './ImageGallery/ImageGallery';
 import Loader from './Loader/Loader';
 import Modal from './Modal/Modal';
 
-class App extends Component {
-  state = {
-    images: [],
-    searchQuery: '',
-    page: 1,
-    isLoading: false,
-    modalImage: '',
-    isModalOpen: false,
-  };
+const App = () => {
+  const [images, setImages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [modalImage, setModalImage] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  apiKey = '40510236-388f5567c4a0a863bef97b410';
-  apiUrl = `https://pixabay.com/api/?key=${this.apiKey}&image_type=photo&orientation=horizontal&per_page=12`;
+  const apiKey = '40510236-388f5567c4a0a863bef97b410';
+  const apiUrl = `https://pixabay.com/api/?key=${apiKey}&image_type=photo&orientation=horizontal&per_page=12`;
 
-  handleSearch = async query => {
-    await this.setState({
-      searchQuery: query,
-      page: 1,
-      images: [],
-    });
-
-    this.fetchImages();
-  };
-
-  handleLoadMore = () => {
-    this.setState(
-      prevState => ({
-        page: prevState.page + 1,
-      }),
-      this.fetchImages
-    );
-  };
-
-  handleImageClick = largeImageURL => {
-    this.setState({
-      isModalOpen: true,
-      modalImage: largeImageURL,
-    });
-  };
-
-  handleCloseModal = () => {
-    this.setState({
-      isModalOpen: false,
-      modalImage: '',
-    });
-  };
-
-  async fetchImages() {
-    const { searchQuery, page } = this.state;
+  const fetchImages = useCallback(async () => {
+    const params = {
+      key: apiKey,
+      q: searchQuery,
+      page: page,
+      image_type: 'photo',
+      orientation: 'horizontal',
+      per_page: 12,
+    };
 
     try {
-      this.setState({ isLoading: true });
-
-      const response = await axios.get(this.apiUrl, {
-        params: {
-          key: this.apiKey,
-          q: searchQuery,
-          page: page,
-          image_type: 'photo',
-          orientation: 'horizontal',
-          per_page: 12,
-        },
-      });
-
+      setIsLoading(true);
+      const response = await axios.get(apiUrl, { params });
       const newImages = response.data.hits;
-
-      this.setState(prevState => ({
-        images: [...prevState.images, ...newImages],
-      }));
+      setImages(prevImages => [...prevImages, ...newImages]);
     } catch (error) {
       console.error('Error fetching images:', error);
     } finally {
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     }
-  }
+  }, [apiKey, apiUrl, searchQuery, page]);
 
-  render() {
-    const { images, isLoading, isModalOpen, modalImage } = this.state;
+  useEffect(() => {
+    if (searchQuery.trim() !== '') {
+      fetchImages();
+    }
+  }, [fetchImages, searchQuery]);
 
-    return (
-      <div style={{ padding: '10px 10px 10px 10px' }}>
-        <Searchbar onSubmit={this.handleSearch} />
-        <ImageGallery images={images} onClick={this.handleImageClick} />
-        {isLoading && <Loader />}
-        {images.length > 0 && <Button onClick={this.handleLoadMore} />}
-        {isModalOpen && (
-          <Modal
-            isOpen={isModalOpen}
-            image={modalImage}
-            onClose={this.handleCloseModal}
-          />
-        )}
-      </div>
-    );
-  }
-}
+  const handleSearch = async query => {
+    setSearchQuery(query);
+    setPage(1);
+    setImages([]);
+  };
+
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
+  const handleImageClick = largeImageURL => {
+    setIsModalOpen(true);
+    setModalImage(largeImageURL);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setModalImage('');
+  };
+
+  return (
+    <div style={{ padding: '10px 10px 10px 10px' }}>
+      <Searchbar onSubmit={handleSearch} />
+      <ImageGallery images={images} onClick={handleImageClick} />
+      {isLoading && <Loader />}
+      {images.length > 0 && <Button onClick={handleLoadMore} />}
+      {isModalOpen && (
+        <Modal
+          isOpen={isModalOpen}
+          image={modalImage}
+          onClose={handleCloseModal}
+        />
+      )}
+    </div>
+  );
+};
 
 export default App;
